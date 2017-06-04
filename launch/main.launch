@@ -1,0 +1,5 @@
+<launch>
+  <node name="" pkg="rosserial_python" type="serial_node.py" args="/dev/ttyACM0"/>
+  <node name="call_sensors_server" pkg="maccepavd" type="sensor_server.py"/>
+  <node name="exectj_forward_action_server" pkg="maccepavd" type="exectj_forward_aserver.py" />
+</launch>

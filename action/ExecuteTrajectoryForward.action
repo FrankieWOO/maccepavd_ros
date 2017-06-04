@@ -1,0 +1,9 @@
+#define goal
+Command[] commands
+uint32 control_frequency
+---
+#define result
+bool complete
+---
+#define feedback
+Sensors sensors
