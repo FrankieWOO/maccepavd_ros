@@ -12,7 +12,7 @@ from datetime import datetime
 def calibrate_servo1(deg):
     u_deg = [deg, 0, deg, 0, deg, 0, deg, 0]
     Nu = len(u_deg)
-    recorder('record')
+    res = recorder('record')
     rospy.sleep(0.01)
     for u in u_deg:
         u1 = model.servo1_deg2usec(u)
@@ -20,7 +20,7 @@ def calibrate_servo1(deg):
         u3 = model.dc2adc(0)
         pub_rawcmd.publish(u1, u2, u3)
         rospy.sleep(0.5)
-    recorder('stop')
+    res = recorder('stop')
 
 
 def calibrate_servo2(deg):
