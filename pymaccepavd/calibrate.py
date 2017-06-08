@@ -4,11 +4,40 @@ import rospy, rosbag, sys, os, numpy, subprocess, math
 import pandas as pd
 from maccepavd.msg import CommandRaw, SensorsRaw, Command, StateCommand
 from maccepavd.srv import CallSensors, CallRawSensors
+from record_ros.srv import String_cmd
 from maccepavd_model import MaccepavdModel
 from datetime import datetime
 
 
-def step_response_servo1(deg):
+def calibrate_servo1(deg):
+    u_deg = [deg, 0, deg, 0, deg, 0, deg, 0]
+    Nu = len(u_deg)
+    recorder('record')
+    rospy.sleep(0.01)
+    for u in u_deg:
+        u1 = model.servo1_deg2usec(u)
+        u2 = model.servo2_deg2usec(0)
+        u3 = model.dc2adc(0)
+        pub_rawcmd.publish(u1, u2, u3)
+        rospy.sleep(0.5)
+    recorder('stop')
+
+
+def calibrate_servo2(deg):
+    u_deg = [deg, 0, deg, 0, deg, 0, deg, 0]
+    Nu = len(u_deg)
+    recorder('record')
+    rospy.sleep(0.01)
+    for u in u_deg:
+        u1 = model.servo1_deg2usec(0)
+        u2 = model.servo2_deg2usec(u)
+        u3 = model.dc2adc(0)
+        pub_rawcmd.publish(u1, u2, u3)
+        rospy.sleep(0.5)
+    recorder('stop')
+
+
+def step_response_servo1_old(deg):
     # run 1 command and collect sensor data
     bagfile = os.path.dirname(os.path.abspath(__file__)) +'/log/test_servo1.bag'
     timenow = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
@@ -74,7 +103,7 @@ def step_response_servo1(deg):
     dataread.to_csv(csvfilename,index=False)
 
 
-def step_response_servo2(deg):
+def step_response_servo2_old(deg):
     # run 1 command and collect sensor data
     timenow = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     csvfilename = os.path.dirname(os.path.abspath(__file__))+'/log/servo2_step{}_'.format(deg) + timenow + '.csv'
@@ -153,9 +182,20 @@ def go_to_zeros():
 #    print("Shutdown node")
 
 def mean_readings():
-""""
-take 100 sensor readings and cacluate the means
-""""
+    jnt = []
+    servo1 = []
+    servo2 = []
+    for i in range(0,50):
+        rawsensors_response = rawsensors_caller(1)
+        rawsensors_msg = rawsensors_response.sensors_raw
+        jnt.append(rawsensors_msg.joint_sensor)
+        servo1.append(rawsensors_msg.servo1_sensor)
+        servo2.append(rawsensors_msg.servo2_sensor)
+        r.sleep()
+    jnt = numpy.mean(jnt)
+    servo1 = numpy.mean(servo1)
+    servo2 = numpy.mean(servo2)
+    print("{}, {}, {}".format(jnt,servo1,servo2))
 
 
 if __name__ == '__main__':
@@ -164,15 +204,19 @@ if __name__ == '__main__':
     rospy.wait_for_service('call_sensors')
     rawsensors_caller = rospy.ServiceProxy('call_rawsensors', CallRawSensors)
     sensors_caller = rospy.ServiceProxy('call_sensors', CallSensors)
+    recorder = rospy.ServiceProxy('/record/cmd', String_cmd)
     pub_rawcmd = rospy.Publisher('command_raw', CommandRaw, queue_size=2)
     r = rospy.Rate(100)
     if sys.argv[1] == '0':
         go_to_zeros()
     elif sys.argv[1] == 'servo1':
         if len(sys.argv) == 2:
-            step_response_servo1(30)
-        else: step_response_servo1(float(sys.argv[2]))
+            calibrate_servo1(30)
+        else: calibrate_servo1(float(sys.argv[2]))
     elif sys.argv[1] == 'servo2':
         if len(sys.argv) == 2:
-            step_response_servo2(45)
-        else: step_response_servo2(float(sys.argv[2]))
+            calibrate_servo2(45)
+        else: calibrate_servo2(float(sys.argv[2]))
+    elif sys.argv[1] == 'readings':
+        mean_readings()
+    else: print('wrong input arguments')

@@ -10,18 +10,31 @@ class MaccepavdModel(object):
     u1_deg_max = 60
     u1_rad_min = math.radians(u1_deg_min)
     u1_rad_max = math.radians(u1_deg_max)
-    u2_usec_min = 650
-    u2_usec_max = 2300
+    u2_usec_min = 900
+    u2_usec_max = 2100
     u2_deg_min = 0
-    u2_deg_max = 180
+    u2_deg_max = 120
     u2_rad_min = math.radians(u2_deg_min)
     u2_rad_max = math.radians(u2_deg_max)
+    gear_ratio = 4/3
+
+    w0s2r = 0.62424
+    w1s2r = 1.233232
+    w2s2r = 1.156726
+    off0s2r = -1.64603
+    off1s2r = -1.84836
+    off2s2r = -0.68093
 
     def __init__(self):
         self.u1_usec_range = self.u1_usec_max - self.u1_usec_min
         self.u1_deg_range = self.u1_deg_max - self.u1_deg_min
+        self.u1_rad_range = self.u1_rad_max - self.u1_rad_min
+        self.u1_usec_mid = self.u1_usec_range/2 + self.u1_usec_min
         self.u2_usec_range = self.u2_usec_max - self.u2_usec_min
         self.u2_deg_range = self.u2_deg_max - self.u2_deg_min
+        self.u2_rad_range = self.u2_rad_max - self.u2_rad_min
+        self.w1r2u = self.u1_usec_range/self.u1_rad_range
+        self.w2r2u = self.u2_usec_range/self.u2_rad_range
 
     def cmd2raw(self, cmd):
         rawcmd = CommandRaw()
@@ -37,13 +50,17 @@ class MaccepavdModel(object):
         sensor_msg.header = rawsensor_msg.header
         sensor_msg.servo1_position = self.servo1_sensor2rad(rawsensor_msg.servo1_sensor)
         sensor_msg.servo2_position = self.servo2_sensor2rad(rawsensor_msg.servo2_sensor)
-        sensor_msg.joint_angle = rawsensor_msg.joint_sensor
+        sensor_msg.joint_angle = self.joint_sensor2rad(rawsensor_msg.joint_sensor)
         return sensor_msg
 
     def servo1_rad2usec(self, rad):
-        usec = (math.degrees(rad) + 60) * self.u1_usec_range / self.u1_deg_range + self.u1_usec_min
+        usec = rad * self.w1r2u + self.u1_usec_mid
         usec = round(usec)
         return usec
+
+    def servo1_usec2rad(self, usec):
+        rad = (usec - self.u1_usec_mid)/self.w1r2u
+        return rad
 
     def servo1_deg2usec(self, deg):
         usec = (deg + 60) * self.u1_usec_range / self.u1_deg_range + self.u1_usec_min
@@ -52,14 +69,17 @@ class MaccepavdModel(object):
 
     def servo1_sensor2rad(self,read):
         # convert raw sensor read to radium
-        deg = - (read - 296)*60/166
-        rad = math.radians(deg)
+        rad = self.w1s2r*read + self.off1s2r
         return rad
 
     def servo2_rad2usec(self, rad):
-        usec = math.degrees(rad) * self.u2_usec_range / self.u2_deg_range + self.u2_usec_min
+        usec = rad * self.w2r2u + self.u2_usec_min
         usec = round(usec)
         return usec
+
+    def servo2_usec2rad(self, usec):
+        rad = (usec - self.u2_usec_min)/self.w2r2u
+        return rad
 
     def servo2_deg2usec(self, deg):
         usec = deg * self.u2_usec_range / self.u2_deg_range + self.u2_usec_min
@@ -69,8 +89,11 @@ class MaccepavdModel(object):
     def servo2_sensor2rad(self,read):
         # convert raw sensor read to radium
         #
-        deg = - (read - 596) * 180 / 527
-        rad = math.radians(deg)
+        rad = self.w2s2r*read + self.off2s2r
+        return rad
+
+    def joint_sensor2rad(self, read):
+        rad = self.w0s2r*read + self.off0s2r
         return rad
 
     def dc2adc(self, dc):
