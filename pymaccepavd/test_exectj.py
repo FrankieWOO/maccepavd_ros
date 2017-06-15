@@ -83,6 +83,7 @@ def exectj_plot(filename):
     # todo: continue after the rosbag node starts recording
     rospy.sleep(0.5)
     client_forward.send_goal(goal)
+    tstart = rospy.get_time()
     client_forward.wait_for_result()
     rospy.sleep(0.1)
     try:
@@ -142,6 +143,7 @@ if __name__ == '__main__':
             filename = sys.argv[2]
             exectj_plot(filename)
         elif sys.argv[1] == 'exec':
+            filename = sys.argv[2]
             exectj_forward(filename)
     else:
         #print('no trajectory file given')
