@@ -16,6 +16,7 @@ class ExeTjFeedbackAS(object):
         self._as.start()
 
     def exetj_cb(self,goal):
+        # todo: to complete
         nominal_commands = goal.nominal_commands
         control_rate = rospy.Rate(goal.control_frequence)
         n_steps = goal.length

@@ -21,12 +21,13 @@ class ExecTjForwardAS(object):
         commands = goal.commands
         control_rate = rospy.Rate(goal.control_frequency)
         n_steps = len(commands)
+        rawcmd = []
         for i in range(len(commands)):
-            commands[i] = self._model.cmd2raw(commands[i])
+            rawcmd.append(self._model.cmd2raw(commands[i]))
 
         for i in range(len(commands)):
-            feedback = ExecuteTrajectoryForwardFeedback()
-            pub_rawcmd.publish(commands[i])
+            #feedback = ExecuteTrajectoryForwardFeedback()
+            pub_rawcmd.publish(rawcmd[i])
             control_rate.sleep()
 
         result = ExecuteTrajectoryForwardResult()

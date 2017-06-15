@@ -1,4 +1,14 @@
 <launch>
   <node name="" pkg="rosserial_python" type="serial_node.py" args="/dev/ttyACM0"/>
   <node name="call_sensors_server" pkg="maccepavd" type="sensor_server.py"/>
+<arg name="path_save"   default="/home/fan/rosbag_record"/>
+	<arg name="topic"  	default="/state_command"/>
+	<arg name="file_name"  	default="/mccpvd_calibrate"/>
+
+	<group ns="record">
+		<param name="path_save" type="str" value="$(arg path_save)"	/>
+		<param name="topic" 	type="str" value="$(arg topic)"		/>
+		<param name="file_name" type="str" value="$(arg file_name)"	/>
+		<node name="record_ros" pkg="record_ros" type="record_ros" output="screen" respawn="true"/>
+	</group>
 </launch>

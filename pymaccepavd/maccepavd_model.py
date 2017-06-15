@@ -18,12 +18,12 @@ class MaccepavdModel(object):
     u2_rad_max = math.radians(u2_deg_max)
     gear_ratio = 4/3
 
-    w0s2r = 0.62424
-    w1s2r = 1.233232
-    w2s2r = 1.156726
-    off0s2r = -1.64603
-    off1s2r = -1.84836
-    off2s2r = -0.68093
+    w0s2r = 1.224148
+    w1s2r = 1.261684
+    w2s2r = 1.265037
+    off0s2r = -3.17018
+    off1s2r = -1.92962
+    off2s2r = -0.87958
 
     def __init__(self):
         self.u1_usec_range = self.u1_usec_max - self.u1_usec_min
