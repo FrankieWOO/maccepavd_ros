@@ -1,3 +1,4 @@
-float32 u1
-float32 u2
-float32 u3
+Header header
+float64 u1
+float64 u2
+float64 u3

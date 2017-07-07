@@ -25,6 +25,10 @@ class MaccepavdModel(object):
     off1s2r = -1.92962
     off2s2r = -0.87958
 
+    off_dmc = 2.56142492771
+    off_s1c = 2.44158988476
+    off_s2c = 2.53156570911
+
     def __init__(self):
         self.u1_usec_range = self.u1_usec_max - self.u1_usec_min
         self.u1_deg_range = self.u1_deg_max - self.u1_deg_min
@@ -51,6 +55,9 @@ class MaccepavdModel(object):
         sensor_msg.servo1_position = self.servo1_sensor2rad(rawsensor_msg.servo1_sensor)
         sensor_msg.servo2_position = self.servo2_sensor2rad(rawsensor_msg.servo2_sensor)
         sensor_msg.joint_angle = self.joint_sensor2rad(rawsensor_msg.joint_sensor)
+        sensor_msg.motor_current = ( rawsensor_msg.motor_current - self.off_dmc)/0.185;
+        sensor_msg.servo1_current = (rawsensor_msg.servo1_current - self.off_s1c)/0.1;
+        sensor_msg.servo2_current = (rawsensor_msg.servo2_current - self.off_s2c)/0.1;
         return sensor_msg
 
     def servo1_rad2usec(self, rad):

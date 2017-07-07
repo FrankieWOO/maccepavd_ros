@@ -101,17 +101,18 @@ def exectj_plot(filename):
     tmpcsvssr = '/home/fan/rosbag_record/tmp_sensors.csv'
     tmpcsvrcmd = '/home/fan/rosbag_record/tmp_rawcmd.csv'
 
-    subprocess.call('rostopic echo -p -b {} /sensors > {}'.format(thefile,tmpcsvssr), shell = True)
+    subprocess.call('rostopic echo -p -b {} /sensors_raw > {}'.format(thefile,tmpcsvssr), shell = True)
     subprocess.call('rostopic echo -p -b {} /command_raw > {}'.format(thefile,tmpcsvrcmd), shell = True)
     subprocess.call('rostopic echo -p -b {} /state_command > {}'.format(thefile,csvfilename), shell = True)
     #bag = rosbag.Bag(thefile)
     #for topic, msg, t in bag.read_messages(topics=[''])
     datassr = pd.read_csv(tmpcsvssr)
-    timestamps = datassr.iloc[:,2]
-    xm = datassr.iloc[:,4]
-    xservo1 = datassr.iloc[:,5]
+    index_start = 0
+    timestamps = datassr.iloc[index_start:,2]
+    xm = datassr.iloc[index_start:,4]
+    xservo1 = datassr.iloc[index_start:,5]
     timestamps = (timestamps - timestamps[0])*(10**-9)
-    datassr.iloc[:,2] = timestamps
+    datassr.iloc[index_start:,2] = timestamps
     datassr.to_csv(tmpcsvssr, index=False)
     tsim = numpy.asarray(range(Nu+1))*0.02
     plot_tj(u, x, tsim, xm, timestamps, xservo1)
@@ -123,8 +124,8 @@ def exectj_plot(filename):
 
 def plot_tj(u, xsim, tsim, xm, tm, xservo1):
     fig, axs = plt.subplots(3,1, sharex = True)
-    axs[0].plot(tsim,xsim[0,:],tm,xm, tm, xservo1)
-    axs[1].plot(tsim[0:-1], u[0,:], tsim[0:-1], u[1,:])
+    axs[0].plot(tsim,xsim[0,:],tm,xm )
+    axs[1].plot(tsim[0:-1], u[0,:], tsim[0:-1], u[1,:],tm, xservo1)
     axs[2].plot(tsim[0:-1],u[2,:])
     plt.show()
     #legend()

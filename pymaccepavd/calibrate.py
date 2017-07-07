@@ -185,17 +185,26 @@ def mean_readings():
     jnt = []
     servo1 = []
     servo2 = []
+    mc = []
+    s1c = []
+    s2c = []
     for i in range(0,50):
         rawsensors_response = rawsensors_caller(1)
         rawsensors_msg = rawsensors_response.sensors_raw
         jnt.append(rawsensors_msg.joint_sensor)
         servo1.append(rawsensors_msg.servo1_sensor)
         servo2.append(rawsensors_msg.servo2_sensor)
+        mc.append(rawsensors_msg.motor_current)
+        s1c.append(rawsensors_msg.servo1_current)
+        s2c.append(rawsensors_msg.servo2_current)
         r.sleep()
     jnt = numpy.mean(jnt)
     servo1 = numpy.mean(servo1)
     servo2 = numpy.mean(servo2)
-    print("{}, {}, {}".format(jnt,servo1,servo2))
+    mc = numpy.mean(mc)
+    s1c = numpy.mean(s1c)
+    s2c = numpy.mean(s2c)
+    print("{}, {}, {}, {}, {}, {}".format(jnt,servo1,servo2,mc,s1c,s2c))
 
 
 if __name__ == '__main__':

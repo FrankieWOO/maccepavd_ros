@@ -12,6 +12,9 @@ def sub_sensors_cb(msg):
     state_cmd.joint_angle = msg.joint_angle
     state_cmd.servo1_position = msg.servo1_position
     state_cmd.servo2_position = msg.servo2_position
+    state_cmd.motor_current = msg.motor_current
+    state_cmd.servo1_current = msg.servo1_current
+    state_cmd.servo2_current = msg.servo2_current
     cmd = cmd_buffer[-1]
     state_cmd.u1 = cmd.u1
     state_cmd.u2 = cmd.u2

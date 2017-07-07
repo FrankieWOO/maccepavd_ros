@@ -1,4 +1,10 @@
 Header header
-float32 joint_sensor
-float32 servo1_sensor
-float32 servo2_sensor
+float64 joint_sensor
+float64 servo1_sensor
+float64 servo2_sensor
+float64 motor_current
+float64 servo1_current
+float64 servo2_current
+uint16 u1
+uint16 u2
+uint16 u3

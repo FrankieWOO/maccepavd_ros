@@ -59,6 +59,7 @@ add_message_files(
    RobotState2nd.msg
    Sensors.msg
    SensorsRaw.msg
+   SensorsRawAdc.msg
    StateCommand.msg
 )
 

@@ -1,0 +1,10 @@
+Header header
+uint16 joint_sensor
+uint16 servo1_sensor
+uint16 servo2_sensor
+uint16 motor_current
+uint16 servo1_current
+uint16 servo2_current
+uint16 u1
+uint16 u2
+uint16 u3
