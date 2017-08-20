@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import rospy, math
+import ConfigParser
 from maccepavd.msg import CommandRaw, Command, Sensors, SensorsRaw
 
 class MaccepavdModel(object):
