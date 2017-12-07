@@ -26,7 +26,12 @@ def sub_rawcmd_cb(msg):
     cmd = Command()
     cmd.u1 = model.servo1_usec2rad(msg.u1)
     cmd.u2 = model.servo2_usec2rad(msg.u2)
-    cmd.u3 = msg.u3/255
+    D1 = msg.D1
+    D2 = msg.D2
+    if D2 == 0:
+        cmd.u3 = (D1/255)*0.5
+    elif D1 == 1:
+        cmd.u3 = 0.5 + (D2/255)*0.5
     cmd_buffer.append(cmd)
     #rawcmd_buffer.append(msg)
     if len(cmd_buffer) > 50:

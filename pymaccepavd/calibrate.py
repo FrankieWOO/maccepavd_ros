@@ -21,7 +21,7 @@ def calibrate_servo1(deg):
         pub_rawcmd.publish(u1, u2, u3)
         rospy.sleep(0.5)
     recorder('stop')
-
+    
 
 def calibrate_servo2(deg):
     u_deg = [deg, 0, deg, 0, deg, 0, deg, 0]
