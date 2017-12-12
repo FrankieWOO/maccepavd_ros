@@ -17,7 +17,7 @@ class MaccepavdModel(object):
     u2_deg_max = 120
     u2_rad_min = math.radians(u2_deg_min)
     u2_rad_max = math.radians(u2_deg_max)
-    gear_ratio = 4/3
+    gear_ratio = 1
 
     w0s2r = 1.224148
     w1s2r = 1.261684
@@ -67,7 +67,7 @@ class MaccepavdModel(object):
         sensor_msg.charge_current = ( rawsensor_msg.charge_current - self.off_dmc)/0.185;
         sensor_msg.servo1_current = (rawsensor_msg.servo1_current - self.off_s1c)/0.1;
         sensor_msg.servo2_current = (rawsensor_msg.servo2_current - self.off_s2c)/0.1;
-        
+
         return sensor_msg
 
     def servo1_rad2usec(self, rad):
