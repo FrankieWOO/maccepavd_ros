@@ -36,6 +36,7 @@ int pin_servo2sensor = 2;
 float Vcc;
 unsigned int jntpos_adc;
 float jntpos_mavg;
+float old_jntpos_mavg;
 float jntspeed = 0;
 //float joint_read;
 //float servo1_read;
@@ -63,17 +64,6 @@ void command_cb(const maccepavd::CommandRaw& cmd_msg){
   command_buffer.u2 = cmd_msg.u2;
   command_buffer.D1 = cmd_msg.D1;
   command_buffer.D2 = cmd_msg.D2;
-
-  if (jntspeed >= 0)
-  {
-    analogWrite(pin_d1,cmd_msg.D1);
-    analogWrite(pin_d2,cmd_msg.D2);
-  }
-  else
-  {
-    analogWrite(pin_d1,cmd_msg.D2);
-    analogWrite(pin_d2,cmd_msg.D1);
-  }
   
 }
 
@@ -164,6 +154,8 @@ void setup() {
   //servo2_read= float(analogRead(pin_servo2sensor));
   command_buffer.u1 = 1500;
   command_buffer.u2 = 900;
+  command_buffer.D1 = 0;
+  command_buffer.D2 = 0;
   setup_timers();
   delay(10);
 
@@ -189,6 +181,7 @@ void loop() {
   //sensor_counter += 1;
   //delay(1);
   //if(sensor_counter == 4){
+
   
   sensors_msg.header.stamp = nh.now();
   //sensors_msg.u1 = command_buffer.u1;
@@ -215,6 +208,16 @@ void loop() {
   //TCNT2 = 0;
   //sensor_counter = 0;
   //}
+  if (jntspeed >= 0)
+  {
+    analogWrite(pin_d1,command_buffer.D1);
+    analogWrite(pin_d2,command_buffer.D2);
+  }
+  else
+  {
+    analogWrite(pin_d1,command_buffer.D2);
+    analogWrite(pin_d2,command_buffer.D1);
+  }
   nh.spinOnce();
 }
 
