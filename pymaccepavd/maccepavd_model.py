@@ -50,7 +50,7 @@ class MaccepavdModel(object):
             D2 = 0
         else:
             D1 = 1
-            D2 = (cmd.u3-0.5)/0.5
+            D2 = (cmd.u3 - 0.5)/0.5
 
         rawcmd.D1 = self.dc2adc(D1)
         rawcmd.D2 = self.dc2adc(D2)
@@ -62,12 +62,9 @@ class MaccepavdModel(object):
         sensor_msg.header = rawsensor_msg.header
         sensor_msg.servo1_position = self.servo1_sensor2rad(rawsensor_msg.servo1_sensor)
         sensor_msg.servo2_position = self.servo2_sensor2rad(rawsensor_msg.servo2_sensor)
-        sensor_msg.joint_angle = self.joint_sensor2rad(rawsensor_msg.joint_sensor)
-        sensor_msg.motor_current = ( rawsensor_msg.motor_current - self.off_dmc)/0.185;
-        sensor_msg.charge_current = ( rawsensor_msg.charge_current - self.off_dmc)/0.185;
-        sensor_msg.servo1_current = (rawsensor_msg.servo1_current - self.off_s1c)/0.1;
-        sensor_msg.servo2_current = (rawsensor_msg.servo2_current - self.off_s2c)/0.1;
-
+        sensor_msg.joint_position = self.joint_sensor2rad(rawsensor_msg.joint_sensor)
+        sensor_msg.rege_current = rawsensor_msg.rege_current
+        sensor_msg.servo_current = rawsensor_msg.servo_current
         return sensor_msg
 
     def servo1_rad2usec(self, rad):

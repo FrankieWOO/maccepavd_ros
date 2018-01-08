@@ -2,11 +2,7 @@ Header header
 float64 joint_sensor
 float64 servo1_sensor
 float64 servo2_sensor
-//float64 motor_current
-float64 charge_current
-//float64 servo1_current
-//float64 servo2_current
-uint16 u1
-uint16 u2
-uint16 D1
-uint16 D2
+#float64 motor_current
+float64 rege_current
+float64 servo_current
+#float64 servo2_current

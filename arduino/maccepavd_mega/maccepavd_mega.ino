@@ -28,13 +28,15 @@ int pin_jointsensor = 0;
 int pin_servo1sensor = 1;
 int pin_servo2sensor = 2;
 
-int pin_current_servo1 = 3;
-int pin_current_servo2 = 4;
+//int pin_current_servo1 = 3;
+//int pin_current_servo2 = 4;
 
-int pin_current_damping = 8;
-int pin_current_charge = 9;
+//int pin_current_damping = 8;
+//int pin_current_charge = 9;
 float Vcc;
-
+unsigned int jntpos_adc;
+float jntpos_mavg;
+float jntspeed = 0;
 //float joint_read;
 //float servo1_read;
 //float servo2_read;
@@ -61,9 +63,18 @@ void command_cb(const maccepavd::CommandRaw& cmd_msg){
   command_buffer.u2 = cmd_msg.u2;
   command_buffer.D1 = cmd_msg.D1;
   command_buffer.D2 = cmd_msg.D2;
+
+  if (jntspeed >= 0)
+  {
+    analogWrite(pin_d1,cmd_msg.D1);
+    analogWrite(pin_d2,cmd_msg.D2);
+  }
+  else
+  {
+    analogWrite(pin_d1,cmd_msg.D2);
+    analogWrite(pin_d2,cmd_msg.D1);
+  }
   
-  analogWrite(pin_d1,cmd_msg.D1);
-  analogWrite(pin_d2,cmd_msg.D2);
 }
 
 ros::Subscriber<maccepavd::CommandRaw> sub("command_raw",command_cb);
@@ -161,6 +172,9 @@ void setup() {
   //nh.advertise(sensor1);
   nh.advertise(sensors_raw);
   nh.subscribe(sub);
+
+  jntpos_adc = analogRead(pin_jointsensor);
+  jntpos_mavg = jntpos_adc;
 }
 
 void loop() {
@@ -177,18 +191,22 @@ void loop() {
   //if(sensor_counter == 4){
   
   sensors_msg.header.stamp = nh.now();
-  sensors_msg.u1 = command_buffer.u1;
-  sensors_msg.u2 = command_buffer.u2;
-  sensors_msg.D1 = command_buffer.D1;
-  sensors_msg.D2 = command_buffer.D2;
-  sensors_msg.joint_sensor = analogRead(pin_jointsensor)*Vcc/1023.0;
+  //sensors_msg.u1 = command_buffer.u1;
+  //sensors_msg.u2 = command_buffer.u2;
+  //sensors_msg.D1 = command_buffer.D1;
+  //sensors_msg.D2 = command_buffer.D2;
+  jntpos_adc = analogRead(pin_jointsensor);
+  old_jntpos_mavg = jntpos_mavg;
+  jntpos_mavg = old_jntpos_mavg*0.75 + jntpos_adc*0.25;
+  jntspeed = jntpos_mavg - old_jntpos_mavg;
+  sensors_msg.joint_sensor = jntpos_adc*Vcc/1023.0;
   //sensors_msg.servo1_sensor = analogRead(pin_servo1sensor)*Vcc/1023.0;
   //sensors_msg.servo2_sensor = analogRead(pin_servo2sensor)*Vcc/1023.0;
   //sensors_msg.motor_current = (analogRead(pin_current_damping)*Vcc/1023.0-Vcc/2)/0.185;
   //sensors_msg.charge_current = (analogRead(pin_current_charge)*Vcc/1023.0-Vcc/2)/0.185;
   //sensors_msg.servo1_current = (analogRead(pin_current_servo1)*Vcc/1023.0-Vcc/2)/0.1;
   //sensors_msg.servo2_current = (analogRead(pin_current_servo2)*Vcc/1023.0-Vcc/2)/0.1;
-  sensors_msg.charge_current = ina219.getCurrent_mA();
+  sensors_msg.rege_current = ina219.getCurrent_mA();
   sensors_raw.publish(&sensors_msg);
   //sendmsg();
   //servo1_read = 0;
