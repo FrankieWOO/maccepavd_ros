@@ -9,12 +9,11 @@ from maccepavd.srv import CallSensors, CallSensorsRequest, CallSensorsResponse, 
 def sub_sensors_cb(msg):
     state_cmd = StateCommand()
     state_cmd.header = msg.header
-    state_cmd.joint_angle = msg.joint_angle
+    state_cmd.joint_position = msg.joint_position
     state_cmd.servo1_position = msg.servo1_position
     state_cmd.servo2_position = msg.servo2_position
-    state_cmd.motor_current = msg.motor_current
-    state_cmd.servo1_current = msg.servo1_current
-    state_cmd.servo2_current = msg.servo2_current
+    state_cmd.rege_current = msg.rege_current
+    state_cmd.servo_current = msg.servo_current
     cmd = cmd_buffer[-1]
     state_cmd.u1 = cmd.u1
     state_cmd.u2 = cmd.u2

@@ -68,6 +68,8 @@ add_service_files(
    FILES
    CallSensors.srv
    CallRawSensors.srv
+   StartRecord.srv
+   StopRecord.srv
 #   Service2.srv
 )
 

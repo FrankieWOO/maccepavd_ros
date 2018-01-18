@@ -4,6 +4,7 @@
   <node name="call_sensors_server" pkg="maccepavd" type="sensor_server.py"/>
   <node name="exectj_forward_action_server" pkg="maccepavd" type="exectj_forward_aserver.py" />
   <node name="statecmd_synchronizer" pkg="maccepavd" type="statecmd_sync.py" />
+  <node name="record_state_server" pkg="maccepavd" type="recordstate_server.py" />
   <arg name="path_save"   default="/home/fan/rosbag_record"/>
   <arg name="topic"  	default="/sensors_raw /command_raw /state_command"/>
   <arg name="file_name"  	default="mccpvd_log"/>

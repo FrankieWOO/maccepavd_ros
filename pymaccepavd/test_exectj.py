@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import glob
+import numpy as np
 import os, sys
 import scipy.io, numpy, rospy, actionlib
 import pandas as pd
@@ -9,6 +10,7 @@ import subprocess
 from maccepavd.msg import ExecuteTrajectoryForwardAction, ExecuteTrajectoryForwardGoal, ExecuteTrajectoryForwardResult, Command
 #from maccepavd_model import MaccepavdModel
 from record_ros.srv import String_cmd
+from maccepavd.srv import StartRecord, StopRecord
 from datetime import datetime
 
 
@@ -35,8 +37,8 @@ def test_exectjforward():
 def exectj_forward(filename):
     filename = 'tjlib/'+filename
     data = scipy.io.loadmat(filename)
-    if data.keys()[0] == 'result':
-        res = data['result']
+    if 'result' in data.keys()[0]:
+        res = data[data.keys()[0]]
         val = res[0,0]
         u = val['u']
         Nu = u.shape[1]
@@ -52,9 +54,27 @@ def exectj_forward(filename):
         cmd.u2 = unow[1]
         cmd.u3 = unow[2]
         goal.commands.append(cmd)
+    start_record_proxy(1)
     client_forward.send_goal(goal)
     client_forward.wait_for_result()
     # todo: exit program if action completed according to result
+    record_res = stop_record_proxy(1)
+    q = []
+    rege_current = []
+    servo_current = []
+    time_stamp = []
+    for ssrmsg in record_res:
+        q.append(ssrmsg.joint_position)
+        rege_current.append(ssrmsg.rege_current)
+        servo_current.append(ssrmsg.servo_current)
+        time_stamp.append(ssrmsg.header)
+
+    time_stamp = (time_stamp - time_stamp[0])*(10**-9)
+    fig, axs = plt.subplots(3,1, sharex = True)
+    axs[0].plot(time_stamp, q )
+    axs[1].plot(time_stamp, rege_current)
+    axs[2].plot(time_stamp, servo_current)
+    plt.show()
     print ('action completed')
 
 
@@ -81,11 +101,11 @@ def exectj_plot(filename):
         goal.commands.append(cmd)
     recorder('record')
     # todo: continue after the rosbag node starts recording
-    rospy.sleep(0.5)
+    #rospy.sleep(0.5)
     client_forward.send_goal(goal)
     tstart = rospy.get_time()
     client_forward.wait_for_result()
-    rospy.sleep(0.1)
+    #rospy.sleep(0.1)
     try:
         recorder('stop')
     except Exception:
@@ -138,7 +158,8 @@ if __name__ == '__main__':
     client_forward.wait_for_server()
     #model = MaccepavdModel()
     recorder = rospy.ServiceProxy('/record/cmd', String_cmd)
-
+    start_record_proxy = rospy.ServiceProxy('/maccepavd/start_record', StartRecord)
+    stop_record_proxy = rospy.ServiceProxy('/maccepavd/stop_record', StopRecord)
     if len(sys.argv) != 1:
         if sys.argv[1] == 'exec_plot':
             filename = sys.argv[2]

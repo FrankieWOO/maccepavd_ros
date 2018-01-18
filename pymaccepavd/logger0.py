@@ -1,10 +1,11 @@
 #! /usr/bin/env python
+# currently abandoned file
 
 import rospy, rosbag, sys, os, numpy, subprocess, math
 
 
 class Logger(object):
-    """Logger: log messages of robto state and command using rosbag and do
+    """Logger: log messages of robot state and command using rosbag and do
     some auto data processing."""
     bagfile = os.path.dirname(os.path.abspath(__file__)) + '/log/templog.bag'
     def __init__(self, bagfile, output_filename):
