@@ -2,7 +2,7 @@
 
 import rospy, message_filters
 from maccepavd_model import MaccepavdModel
-from maccepavd.msg import SensorsRaw, Sensors, CommandRaw, Command, StateCommand
+from maccepavd.msg import SensorsRawAdc, Sensors, CommandRaw, Command, StateCommand
 from maccepavd.srv import CallSensors, CallSensorsRequest, CallSensorsResponse, CallRawSensors, CallRawSensorsRequest, CallRawSensorsResponse
 
 
@@ -20,9 +20,10 @@ def sub_sensors_cb(msg):
     # convert and store the sensor reading into buffer
     #sensor_msg = Sensors()
     sensor_msg = model.raw2sensors(msg)
+    pub_sensor.publish(sensor_msg)
     rawsensors_buffer.append(msg)
     sensors_buffer.append(sensor_msg)
-    pub_sensor.publish(sensor_msg)
+
     #state_cmd = StateCommand()
     #state_cmd.header = msg.header
     #state_cmd.joint_angle = sensor_msg.joint_angle
@@ -33,7 +34,7 @@ def sub_sensors_cb(msg):
     #state_cmd.u2 = cmd.u2
     #state_cmd.u3 = cmd.u3
     #pub_statecmd.publish(state_cmd)
-    if len(sensors_buffer) > 1000:
+    if len(sensors_buffer) > 500:
         del sensors_buffer[0]
         del rawsensors_buffer[0]
 
@@ -62,7 +63,7 @@ if __name__ == '__main__':
     #cmd_buffer.append(cmd0)
     model = MaccepavdModel()
     rospy.init_node('call_sensors_server')
-    sub_rawssr = rospy.Subscriber('sensors_raw', SensorsRaw, sub_sensors_cb)
+    sub_rawssr = rospy.Subscriber('sensors_raw', SensorsRawAdc, sub_sensors_cb)
     #sub_rawcmd = message_filters.Subscriber('command_raw', CommandRaw, )
     #sub_rawcmd = rospy.Subscriber('command_raw', CommandRaw, sub_rawcmd_cb)
     #pub_statecmd = rospy.Publisher('state_command', StateCommand, queue_size = 10)

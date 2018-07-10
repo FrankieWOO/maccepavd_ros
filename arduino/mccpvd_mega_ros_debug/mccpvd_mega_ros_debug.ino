@@ -7,7 +7,7 @@
  */
 #include <avr/sleep.h>
 #include <ros.h>
-#include <maccepavd/SensorsRaw.h>
+#include <maccepavd/SensorsRawAdcCmd.h>
 #include <maccepavd/CommandRaw.h>
 #include <std_msgs/UInt16.h>
 #include <ros/time.h>
@@ -47,7 +47,7 @@ float jntspeed = 0;
 //int jnt_reads[numReadings];
 
 ros::NodeHandle nh;
-maccepavd::SensorsRaw sensors_msg;
+maccepavd::SensorsRawAdcCmd sensors_msg;
 
 union{
   struct{
@@ -142,11 +142,12 @@ void setupADC(){
 void setup() {
   //Serial.begin(57600);
   //setupADC();
+  nh.getHardware()-> setBaud(250000); // change Baudrate works now? :)
   pinMode(pin_servo1,OUTPUT);
   pinMode(pin_servo2,OUTPUT);
   pinMode(pin_d1,OUTPUT);
   pinMode(pin_d2,OUTPUT);
-  Vcc = readVcc()/1000.0;
+  //Vcc = readVcc()/1000.0;
   ina219.begin();
   Serial.println(Vcc);
   //joint_read = float(analogRead(pin_jointsensor));
@@ -159,7 +160,7 @@ void setup() {
   setup_timers();
   delay(10);
 
-  //nh.getHardware()->setBaud(115200); change baudrate doesn't work
+  
   nh.initNode();
   //nh.advertise(sensor1);
   nh.advertise(sensors_raw);
@@ -192,14 +193,18 @@ void loop() {
   old_jntpos_mavg = jntpos_mavg;
   jntpos_mavg = old_jntpos_mavg*0.75 + jntpos_adc*0.25;
   jntspeed = jntpos_mavg - old_jntpos_mavg;
-  sensors_msg.joint_sensor = jntpos_adc*Vcc/1023.0;
-  //sensors_msg.servo1_sensor = analogRead(pin_servo1sensor)*Vcc/1023.0;
+  sensors_msg.joint_sensor = jntpos_adc;
+  sensors_msg.servo1_sensor = analogRead(pin_servo1sensor);
   //sensors_msg.servo2_sensor = analogRead(pin_servo2sensor)*Vcc/1023.0;
   //sensors_msg.motor_current = (analogRead(pin_current_damping)*Vcc/1023.0-Vcc/2)/0.185;
   //sensors_msg.charge_current = (analogRead(pin_current_charge)*Vcc/1023.0-Vcc/2)/0.185;
   //sensors_msg.servo1_current = (analogRead(pin_current_servo1)*Vcc/1023.0-Vcc/2)/0.1;
   //sensors_msg.servo2_current = (analogRead(pin_current_servo2)*Vcc/1023.0-Vcc/2)/0.1;
   sensors_msg.rege_current = ina219.getCurrent_mA();
+  sensors_msg.u1 = command_buffer.u1;
+  sensors_msg.u2 = command_buffer.u2;
+  sensors_msg.D1 = command_buffer.D1;
+  sensors_msg.D2 = command_buffer.D2;
   sensors_raw.publish(&sensors_msg);
   //sendmsg();
   //servo1_read = 0;

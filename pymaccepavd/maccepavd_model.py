@@ -1,7 +1,20 @@
 #! /usr/bin/env python
 
+import sys
+import os
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
+print(sys.version_info.major)
+if sys.version_info.major > 2:
+    import configparser
+    config = configparser.ConfigParser()
+else:
+    import ConfigParser
+    config = ConfigParser.ConfigParser()
+
+
 import rospy, math
-import ConfigParser
+#import ConfigParser
 from maccepavd.msg import CommandRaw, Command, Sensors, SensorsRaw
 
 class MaccepavdModel(object):
@@ -19,18 +32,24 @@ class MaccepavdModel(object):
     u2_rad_max = math.radians(u2_deg_max)
     gear_ratio = 1
 
+    """ weights and offsets values for transfering sensor readings (in voltage)
+    # to radians. moved to ini setting file
     w0s2r = 1.224148
     w1s2r = 1.261684
     w2s2r = 1.265037
     off0s2r = -3.17018
     off1s2r = -1.92962
     off2s2r = -0.87958
-
+    """
     off_dmc = 2.56142492771
     off_s1c = 2.44158988476
     off_s2c = 2.53156570911
 
+
     def __init__(self):
+        """
+        read config file settings_sensors.ini and
+        """
         self.u1_usec_range = self.u1_usec_max - self.u1_usec_min
         self.u1_deg_range = self.u1_deg_max - self.u1_deg_min
         self.u1_rad_range = self.u1_rad_max - self.u1_rad_min
@@ -40,6 +59,24 @@ class MaccepavdModel(object):
         self.u2_rad_range = self.u2_rad_max - self.u2_rad_min
         self.w1r2u = self.u1_usec_range/self.u1_rad_range
         self.w2r2u = self.u2_usec_range/self.u2_rad_range
+        config.read(dir_path+'/settings_sensors.ini')
+        toread = 'adc'
+        # use raw ADC sensor data, setup adc-rad conversion
+        if toread == 'adc':
+            self.w0s2r = float(config.get('joint-adc2rad','weight'))
+            self.off0s2r = float(config.get('joint-adc2rad','offset'))
+            self.w1s2r = float(config.get('servo1-adc2rad','weight'))
+            self.off1s2r = float(config.get('servo1-adc2rad','offset'))
+            self.w2s2r = float(config.get('servo2-adc2rad','weight'))
+            self.off2s2r = float(config.get('servo2-adc2rad','offset'))
+        else:
+            self.w0s2r = float(config.get('joint-vol2rad','weight'))
+            self.off0s2r = float(config.get('joint-vol2rad','offset'))
+            self.w1s2r = float(config.get('servo1-vol2rad','weight'))
+            self.off1s2r = float(config.get('servo1-vol2rad','offset'))
+            self.w2s2r = float(config.get('servo2-vol2rad','weight'))
+            self.off2s2r = float(config.get('servo2-vol2rad','offset'))
+
 
     def cmd2raw(self, cmd):
         rawcmd = CommandRaw()

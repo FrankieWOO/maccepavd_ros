@@ -15,6 +15,7 @@ from datetime import datetime
 
 
 def test_exectjforward():
+    # test the action server
     u1 = numpy.ones(100)*0.7
     u2 = numpy.zeros_like(u1)
     u3 = numpy.zeros_like(u1)
@@ -37,11 +38,14 @@ def test_exectjforward():
 def exectj_forward(filename):
     filename = 'tjlib/'+filename
     data = scipy.io.loadmat(filename)
-    if 'result' in data.keys()[0]:
-        res = data[data.keys()[0]]
-        val = res[0,0]
-        u = val['u']
-        Nu = u.shape[1]
+    datakeys = data.keys()
+    for key in datakeys:
+        if 'result' in key:
+            res = data[key]
+            val = res[0,0]
+            u = val['u']
+            Nu = u.shape[1]
+            break
 
     # create the Goal
     goal = ExecuteTrajectoryForwardGoal()
@@ -58,7 +62,8 @@ def exectj_forward(filename):
     client_forward.send_goal(goal)
     client_forward.wait_for_result()
     # todo: exit program if action completed according to result
-    record_res = stop_record_proxy(1)
+    record_response = stop_record_proxy(1)
+    record_res = record_response.sensors
     q = []
     rege_current = []
     servo_current = []
@@ -67,14 +72,15 @@ def exectj_forward(filename):
         q.append(ssrmsg.joint_position)
         rege_current.append(ssrmsg.rege_current)
         servo_current.append(ssrmsg.servo_current)
-        time_stamp.append(ssrmsg.header)
+        time_stamp.append(ssrmsg.header.stamp.toSec())
 
-    time_stamp = (time_stamp - time_stamp[0])*(10**-9)
-    fig, axs = plt.subplots(3,1, sharex = True)
-    axs[0].plot(time_stamp, q )
-    axs[1].plot(time_stamp, rege_current)
-    axs[2].plot(time_stamp, servo_current)
-    plt.show()
+    #time_stamp = (time_stamp - time_stamp[0])*(10**-9)
+    #fig, axs = plt.subplots(3,1, sharex = True)
+    #axs[0].plot(time_stamp, q )
+    #axs[1].plot(time_stamp, rege_current)
+    #axs[2].plot(time_stamp, servo_current)
+    #plt.show()
+    print(q)
     print ('action completed')
 
 

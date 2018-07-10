@@ -55,12 +55,13 @@ add_message_files(
    CommandRaw.msg
    CommandsFeedback.msg
    CommandsForward.msg
-   RobotState.msg
-   RobotState2nd.msg
    Sensors.msg
    SensorsRaw.msg
    SensorsRawAdc.msg
+   SensorsRawAdcCmd.msg
    StateCommand.msg
+   RobotState.msg
+   RobotState2nd.msg
 )
 
 ## Generate services in the 'srv' folder
