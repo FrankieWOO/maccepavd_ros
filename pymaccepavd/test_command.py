@@ -49,10 +49,17 @@ def test_send_cmd_seq():
 
 
 rospy.init_node('test_commandraw')
-u1 = 1500
-u2 = 1500
-D1 = 0
-D2 = 0
-pub_rawcmd = rospy.Publisher('command_raw', CommandRaw, queue_size=10)
-pub_rawcmd.publish(u1, u2, D1, D2)
+rawcmd = CommandRaw()
+rawcmd.u1 = 1500
+rawcmd.u2 = 1200
+rawcmd.D1 = 0
+rawcmd.D2 = 0
+pub_rawcmd = rospy.Publisher('/command_raw', CommandRaw, queue_size=10)
 model = MaccepavdModel()
+#rospy.spin()
+r = rospy.Rate(10) # 10hz
+while not rospy.is_shutdown():
+    pub_rawcmd.publish(rawcmd)
+    r.sleep()
+
+print('pub finished')

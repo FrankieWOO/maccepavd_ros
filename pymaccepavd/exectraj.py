@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import numpy as np
+import math
 import pandas as pd
 import os, sys, glob
 python3 = True if sys.hexversion > 0x03000000 else False
@@ -40,14 +41,14 @@ def exec_single_traj(traj):
     #t0 = rospy.get_rostime().to_sec()
     t0 = rospy.get_time()
     record = True # turn on data record
-    for j in range(n):
+    for j in range(len(cmds)):
         pub_rawcmd.publish(cmds[j])
         loop_rate.sleep()
     record = False # turn off data record
 
     y = convert_msglist_to_dict(record_buffer) # retrieve the list of msg and convert to dict
     record_buffer = []
-    y['header'] = y['header'] - t0
+    y['header'] = np.asarray(y['header']) - t0
     return y
 
 
@@ -81,24 +82,38 @@ def save_dict_csv(data, filename):
 
 
 def test():
-    folderpath = 'trajs/'
+    folderpath = '/home/fan/workspace/EOC/matlab/tjlib/vardamp_test/'
     trajfile = 'test.csv'
     savefile = 'test_record.csv'
     y = exec_traj_csv(folderpath+trajfile)
-    save_dict_csv(y, 'record/'+savefile)
+    save_dict_csv(y, 'record/vardamp_test/'+savefile)
+
+
+def vardamp():
+    """
+    execute trajs in vardamp folder
+    """
+    folderpath = '/home/fan/workspace/EOC/matlab/tjlib/vardamp/'
+    filenames = glob.glob(folderpath+'*.csv')
+    savefolder = 'record/vardamp/'
+    for k in range(len(filenames)):
+        y = exec_traj_csv(filenames[k])
+        save_dict_csv(y, savefolder+'record_traj'+str(k+1)+'.csv')
 
 
 if __name__ == '__main__':
-    rospy.init_node('/maccepavd/exectraj')
+    rospy.init_node('exectraj')
     record = False
     record_buffer = []
     model = MaccepavdModel()
     cmd0 = Command()
     cmd0.u1 = 0
-    cmd0.u2 = pi/6
+    cmd0.u2 = math.pi/6
     cmd0.u3 = 0
     rawcmd0 = model.cmd2raw(cmd0)
     pub_rawcmd = rospy.Publisher('command_raw', CommandRaw, queue_size=10)
     sub_rawssr = rospy.Subscriber('sensors', Sensors, sub_sensors_cb)
     pub_rawcmd.publish(rawcmd0)
-    test()
+    rospy.sleep(1.)
+    #test()
+    vardamp()
