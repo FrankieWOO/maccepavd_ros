@@ -38,6 +38,8 @@ unsigned int jntpos_adc;
 float jntpos_mavg;
 float old_jntpos_mavg;
 float jntspeed = 0;
+float rege_i = 0;
+float rege_v = 0;
 //float joint_read;
 //float servo1_read;
 //float servo2_read;
@@ -142,14 +144,14 @@ void setupADC(){
 void setup() {
   //Serial.begin(57600);
   //setupADC();
-  nh.getHardware()->setBaud(250000);
+  nh.getHardware()->setBaud(115200);
   pinMode(pin_servo1,OUTPUT);
   pinMode(pin_servo2,OUTPUT);
   pinMode(pin_d1,OUTPUT);
   pinMode(pin_d2,OUTPUT);
   //Vcc = readVcc()/1000.0;
   ina219.begin();
-  Serial.println(Vcc);
+  //Serial.println(Vcc);
   //joint_read = float(analogRead(pin_jointsensor));
   //servo1_read= float(analogRead(pin_servo1sensor));
   //servo2_read= float(analogRead(pin_servo2sensor));
@@ -200,7 +202,9 @@ void loop() {
   //sensors_msg.charge_current = (analogRead(pin_current_charge)*Vcc/1023.0-Vcc/2)/0.185;
   //sensors_msg.servo1_current = (analogRead(pin_current_servo1)*Vcc/1023.0-Vcc/2)/0.1;
   //sensors_msg.servo2_current = (analogRead(pin_current_servo2)*Vcc/1023.0-Vcc/2)/0.1;
-  sensors_msg.rege_current = ina219.getCurrent_mA();
+  rege_i = ina219.getCurrent_mA();
+  rege_v = ina219.getBusVoltage_V();
+  sensors_msg.rege_current = rege_i*rege_v;
   sensors_raw.publish(&sensors_msg);
   //sendmsg();
   //servo1_read = 0;

@@ -6,6 +6,7 @@ import pandas as pd
 import os, sys, glob
 python3 = True if sys.hexversion > 0x03000000 else False
 import rospy
+import matplotlib.pyplot as plt
 from maccepavd.msg import Command, CommandRaw, Sensors
 from maccepavd_model import MaccepavdModel
 
@@ -55,6 +56,7 @@ def exec_single_traj(traj):
 def exec_traj_csv(filename):
     """
     read traj from csv and execute it
+    return y as dict
     """
     df = pd.read_csv(filename)
     traj = df.to_dict()
@@ -82,23 +84,81 @@ def save_dict_csv(data, filename):
 
 
 def test():
-    folderpath = '/home/fan/workspace/EOC/matlab/tjlib/vardamp_test/'
-    trajfile = 'test.csv'
-    savefile = 'test_record.csv'
+    #folderpath = '/home/fan/workspace/EOC/matlab/trajs/test/'
+    #trajfile = 'test_reach.csv'
+    #savefile = 'test_record.csv'
+
+    folderpath = 'trajs/test/'
+    trajfile = 'test_slow.csv'
     y = exec_traj_csv(folderpath+trajfile)
-    save_dict_csv(y, 'record/vardamp_test/'+savefile)
+    plt.plot(y['header'],y['servo1_position'])
+    plt.plot(y['header'],y['joint_position'])
+    #plt.plot(y['header'],y['rege_current'])
+
+    plt.show()
+    #save_dict_csv(y, 'record/vardamp_test/'+savefile)
 
 
-def vardamp():
+def vardamp(iter):
     """
     execute trajs in vardamp folder
     """
-    folderpath = '/home/fan/workspace/EOC/matlab/tjlib/vardamp/'
+    #folderpath = '/home/fan/workspace/EOC/matlab/trajs/vardamp/command/'
+    #filenames = glob.glob(folderpath+'*.csv')
+    #savefolder = '/home/fan/workspace/EOC/matlab/trajs/vardamp/record/'
+    folderpath = '/home/fan/catkin_ws/src/maccepavd/pymaccepavd/trajs/trajs'+ str(iter)+'/vardamp/command/'
     filenames = glob.glob(folderpath+'*.csv')
-    savefolder = 'record/vardamp/'
+    savefolder = '/home/fan/catkin_ws/src/maccepavd/pymaccepavd/trajs/trajs/vardamp/record/'
     for k in range(len(filenames)):
-        y = exec_traj_csv(filenames[k])
-        save_dict_csv(y, savefolder+'record_traj'+str(k+1)+'.csv')
+        y = exec_traj_csv(folderpath+'traj'+str(k+1)+'.csv')
+        save_dict_csv(y, savefolder+'record_traj'+str(k+1)+'_'+str(iter)+'.csv')
+        rospy.sleep(0.1)
+
+
+def fixdamp(iter):
+    """
+    execute trajs in vardamp folder
+    """
+    #folderpath = '/home/fan/workspace/EOC/matlab/trajs/fixdamp/command/'
+    #filenames = glob.glob(folderpath+'*.csv')
+    #savefolder = '/home/fan/workspace/EOC/matlab/trajs/fixdamp/record/'
+    folderpath = '/home/fan/catkin_ws/src/maccepavd/pymaccepavd/trajs/trajs'+ str(iter)+'/fixdamp/command/'
+    filenames = glob.glob(folderpath+'*.csv')
+    savefolder = '/home/fan/catkin_ws/src/maccepavd/pymaccepavd/trajs/trajs/fixdamp/record/'
+
+    for k in range(len(filenames)):
+        y = exec_traj_csv(folderpath+'traj'+str(k+1)+'.csv')
+        save_dict_csv(y, savefolder+'record_traj'+str(k+1)+'_'+str(iter)+'.csv')
+        rospy.sleep(0.1)
+
+
+def multitrajs_optimal(iter):
+    """
+    execute trajs in optimal folder
+    """
+    folderpath = '/home/fan/catkin_ws/src/maccepavd/pymaccepavd/trajs/trajs'+ str(iter)+'/optimal/command/'
+    filenames = glob.glob(folderpath+'*.csv')
+    savefolder = '/home/fan/catkin_ws/src/maccepavd/pymaccepavd/trajs/trajs/optimal/record/'
+    for k in range(len(filenames)):
+        y = exec_traj_csv(folderpath+'traj'+str(k+1)+'.csv')
+        save_dict_csv(y, savefolder+'record_traj'+str(k+1)+'_'+str(iter)+'.csv')
+        rospy.sleep(0.1)
+
+
+def constant(iter):
+    """
+    execute trajs in constant folder
+    """
+    folderpath = '/home/fan/catkin_ws/src/maccepavd/pymaccepavd/trajs/trajs'+str(iter)+'/constant/command/'
+    filenames = glob.glob(folderpath+'*.csv')
+
+    #savefolder = '/home/fan/workspace/EOC/matlab/trajs/constant/record/'
+    savefolder = '/home/fan/catkin_ws/src/maccepavd/pymaccepavd/trajs/trajs/constant/record/'
+    for k in range(len(filenames)):
+        y = exec_traj_csv(folderpath+'traj'+str(k+1)+'.csv')
+        save_dict_csv(y, savefolder+'record_traj'+str(k+1)+'_'+str(iter)+'.csv')
+        rospy.sleep(0.1)
+
 
 
 if __name__ == '__main__':
@@ -108,7 +168,8 @@ if __name__ == '__main__':
     model = MaccepavdModel()
     cmd0 = Command()
     cmd0.u1 = 0
-    cmd0.u2 = math.pi/6
+    #cmd0.u2 = math.pi/6
+    cmd0.u2 = 0.1
     cmd0.u3 = 0
     rawcmd0 = model.cmd2raw(cmd0)
     pub_rawcmd = rospy.Publisher('command_raw', CommandRaw, queue_size=10)
@@ -116,4 +177,22 @@ if __name__ == '__main__':
     pub_rawcmd.publish(rawcmd0)
     rospy.sleep(1.)
     #test()
-    vardamp()
+    #vardamp(2)
+    #constant(2)
+    #multitrajs_optimal(2)
+    #fixdamp(2)
+    if len(sys.argv) != 1:
+        if sys.argv[1] == 'exec_plot':
+            filename = sys.argv[2]
+            exectj_plot(filename)
+        elif sys.argv[1] == 'exec':
+            filename = sys.argv[2]
+            y = exec_traj_csv('/home/fan/Dropbox/workspace/ws_matlab/redundancy_control/research/PTOCA/data/ilqrseq/command/Df.csv')
+            save_dict_csv(y, '/home/fan/Dropbox/workspace/ws_matlab/redundancy_control/research/PTOCA/data/ilqrseq/command/Df_record.csv')
+    else:
+        #print('no trajectory file given')
+        test_exectjforward()
+
+    rospy.sleep(0.1)
+    pub_rawcmd.publish(rawcmd0)
+    rospy.sleep(2.0)

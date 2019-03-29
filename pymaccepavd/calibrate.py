@@ -1,27 +1,76 @@
 #! /usr/bin/env python
 
-import rospy, rosbag, sys, os, numpy, subprocess, math
+import rospy, rosbag, sys, os, subprocess, math
 import pandas as pd
-from maccepavd.msg import CommandRaw, SensorsRaw, Command, StateCommand
+import numpy as np
+from maccepavd.msg import CommandRaw, SensorsRawAdc, Command, StateCommand
 from maccepavd.srv import CallSensors, CallRawSensors
 from record_ros.srv import String_cmd
 from maccepavd_model import MaccepavdModel
 from datetime import datetime
 
 
+def calibrate_joint():
+    global record, record_buffer
+    record = True
+    rospy.sleep(0.5)
+    record = False
+    y = record_buffer
+    record_buffer = []
+    p0 = []
+    for r in y:
+        p0.append(r.joint_sensor)
+    p0 = np.mean(np.asarray(p0))
+    pub_rawcmd.publish(1800, 1500, 255 ,0)
+    rospy.sleep(2.)
+    record = True
+    rospy.sleep(0.5)
+    record = False
+    y = record_buffer
+    record_buffer = []
+    p1 = []
+    for r in y:
+        p1.append(r.joint_sensor)
+    p1 = np.mean(np.asarray(p1))
+    w = math.pi/6/(p1 - p0)
+    off = -w*p0;
+    print("{}, {}".format(w, off))
+
+
 def calibrate_servo1(deg):
-    u_deg = [deg, 0, deg, 0, deg, 0, deg, 0]
-    Nu = len(u_deg)
-    recorder('record')
-    rospy.sleep(0.01)
-    for u in u_deg:
-        u1 = model.servo1_deg2usec(u)
-        u2 = model.servo2_deg2usec(0)
-        u3 = model.dc2adc(0)
-        pub_rawcmd.publish(u1, u2, u3)
-        rospy.sleep(0.5)
-    recorder('stop')
-    
+    pub_rawcmd.publish(1500, 900, 0, 0)
+    global record, record_buffer
+    rospy.sleep(2.0)
+    record = True
+    rospy.sleep(0.5)
+    record = False
+    y = record_buffer
+    record_buffer = []
+    s1 = []
+    for r in y:
+        s1.append(r.servo1_sensor)
+    s1 = np.mean(np.asarray(s1))
+
+    pub_rawcmd.publish(1800, 900, 0, 0)
+    rospy.sleep(2.0)
+    record = True
+    rospy.sleep(0.5)
+    record = False
+    y = record_buffer
+    record_buffer = []
+    s2 = []
+    for r in y:
+        s2.append(r.servo1_sensor)
+    s2 = np.mean(np.asarray(s2))
+    """
+    0 = w*s1 + off
+    pi/6 = w*s2 + off
+    """
+    w = math.pi/6/(s2 - s1)
+    off = -w*s1
+    print("{}, {}".format(w, off))
+
+
 
 def calibrate_servo2(deg):
     u_deg = [deg, 0, deg, 0, deg, 0, deg, 0]
@@ -207,14 +256,23 @@ def mean_readings():
     print("{}, {}, {}, {}, {}, {}".format(jnt,servo1,servo2,mc,s1c,s2c))
 
 
+def sub_sensors_cb(msg):
+    if record:
+        record_buffer.append(msg)
+
+
 if __name__ == '__main__':
     model = MaccepavdModel()
     rospy.init_node('calibrate')
-    rospy.wait_for_service('call_sensors')
-    rawsensors_caller = rospy.ServiceProxy('call_rawsensors', CallRawSensors)
-    sensors_caller = rospy.ServiceProxy('call_sensors', CallSensors)
-    recorder = rospy.ServiceProxy('/record/cmd', String_cmd)
+    #rospy.wait_for_service('call_sensors')
+    #rawsensors_caller = rospy.ServiceProxy('call_rawsensors', CallRawSensors)
+    #sensors_caller = rospy.ServiceProxy('call_sensors', CallSensors)
+    #recorder = rospy.ServiceProxy('/record/cmd', String_cmd)
+    record = False
+    record_buffer = []
     pub_rawcmd = rospy.Publisher('command_raw', CommandRaw, queue_size=2)
+    sub_rawssr = rospy.Subscriber('sensors_raw', SensorsRawAdc, sub_sensors_cb)
+
     r = rospy.Rate(100)
     if sys.argv[1] == '0':
         go_to_zeros()
@@ -228,4 +286,6 @@ if __name__ == '__main__':
         else: calibrate_servo2(float(sys.argv[2]))
     elif sys.argv[1] == 'readings':
         mean_readings()
+    elif sys.argv[1] == 'joint':
+        calibrate_joint()
     else: print('wrong input arguments')

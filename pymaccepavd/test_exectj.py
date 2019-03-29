@@ -7,14 +7,36 @@ import scipy.io, numpy, rospy, actionlib
 import pandas as pd
 import matplotlib.pyplot as plt
 import subprocess
-from maccepavd.msg import ExecuteTrajectoryForwardAction, ExecuteTrajectoryForwardGoal, ExecuteTrajectoryForwardResult, Command
+from maccepavd.msg import ExecuteTrajectoryForwardAction, ExecuteTrajectoryForwardGoal, \
+ExecuteTrajectoryForwardResult, Command, Sensors
 #from maccepavd_model import MaccepavdModel
-from record_ros.srv import String_cmd
+#from record_ros.srv import String_cmd
 from maccepavd.srv import StartRecord, StopRecord
 from datetime import datetime
 
 
+def sub_sensors_cb(msg):
+    global record
+    if record:
+        record_buffer.append(msg)
+
+
+def convert_msglist_to_dict(msgs):
+    fieldnames = msgs[0].__slots__
+    data = {x: [] for x in fieldnames} # init a dict of empty lists
+    for k in range(len(msgs)):
+        for f in fieldnames:
+            data[f].append(getattr(msgs[k], f))
+
+    if 'header' in fieldnames:
+        for k in range(len(data['header'])):
+            data['header'][k] = data['header'][k].stamp.to_sec()
+
+    return data
+
+
 def test_exectjforward():
+    global record, record_buffer
     # test the action server
     u1 = numpy.ones(100)*0.7
     u2 = numpy.zeros_like(u1)
@@ -29,13 +51,42 @@ def test_exectjforward():
         cmd.u2 = u2[i]
         cmd.u3 = u3[i]
         goal.commands.append(cmd)
+    #start_record_proxy(1)
+
+    record = True
     client_forward.send_goal(goal)
     client_forward.wait_for_result()
+    #record_response = stop_record_proxy(1)
+    #record_res = record_response.sensors
     # todo: exit program if action completed according to result
-    print ('action completed')
+    action_result = client_forward.get_result()
+    if action_result.complete:
+        print ('action completed')
+    else:
+        print('action not completed')
+    action_record = action_result.record
+    t0 = rospy.get_time()
+    record = False
+    #y = convert_msglist_to_dict(action_record) # retrieve the list of msg and convert to dict
+    y = convert_msglist_to_dict(record_buffer)
+    record_buffer = []
+    y['header'] = np.asarray(y['header']) - t0
+
+    #rege_current = []
+    #servo_current = []
+    #time_stamp = []
+    #for ssrmsg in record_res:
+    #    q.append(ssrmsg.joint_position)
+        #rege_current.append(ssrmsg.rege_current)
+        #servo_current.append(ssrmsg.servo_current)
+    #    time_stamp.append(ssrmsg.header.stamp.toSec())
+    print(len(y['header']))
+    #print(action_record)
+    print(len(action_record))
 
 
 def exectj_forward(filename):
+    #execute mat file
     filename = 'tjlib/'+filename
     data = scipy.io.loadmat(filename)
     datakeys = data.keys()
@@ -163,9 +214,12 @@ if __name__ == '__main__':
     # wait for action server to be ready
     client_forward.wait_for_server()
     #model = MaccepavdModel()
-    recorder = rospy.ServiceProxy('/record/cmd', String_cmd)
-    start_record_proxy = rospy.ServiceProxy('/maccepavd/start_record', StartRecord)
-    stop_record_proxy = rospy.ServiceProxy('/maccepavd/stop_record', StopRecord)
+    #recorder = rospy.ServiceProxy('/record/cmd', String_cmd)
+    #start_record_proxy = rospy.ServiceProxy('/maccepavd/start_record', StartRecord)
+    #stop_record_proxy = rospy.ServiceProxy('/maccepavd/stop_record', StopRecord)
+    sub_rawssr = rospy.Subscriber('sensors', Sensors, sub_sensors_cb)
+    record = False
+    record_buffer = []
     if len(sys.argv) != 1:
         if sys.argv[1] == 'exec_plot':
             filename = sys.argv[2]

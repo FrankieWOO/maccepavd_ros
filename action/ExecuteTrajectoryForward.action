@@ -4,6 +4,7 @@ uint32 control_frequency
 ---
 #define result
 bool complete
+Sensors[] record
 ---
 #define feedback
 Sensors sensors
