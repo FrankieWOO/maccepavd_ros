@@ -22,6 +22,7 @@ class ExecTjForwardAS(object):
 
 
     def exectj_cb(self,goal):
+        global record_flag, record_buffer
         commands = goal.commands
         control_rate = rospy.Rate(goal.control_frequency)
         n_steps = len(commands)
@@ -30,28 +31,43 @@ class ExecTjForwardAS(object):
             rawcmd.append(self._model.cmd2raw(commands[i]))
 
         arecord = []
+        record_flag = True
         for i in range(len(commands)):
             #feedback = ExecuteTrajectoryForwardFeedback()
             pub_rawcmd.publish(rawcmd[i])
-            resp = request_state(1)
             self._feedback = ExecuteTrajectoryForwardFeedback()
-            #self._feedback.sensors = Sensors()
-            #self._feedback.sensors.joint_position = 1
-            self._feedback.sensors = resp.sensors
+            #
+            #resp = request_state(1)
+            #self._feedback.sensors = resp.sensors
+            #arecord.append(self._feedback.sensors)
+            #
+            #self._feedback.sensors = record_buffer[-1]
             self._as.publish_feedback(self._feedback)
-            arecord.append(self._feedback.sensors)
             control_rate.sleep()
-        resp = request_state(1)
-        arecord.append(resp.sensors)
+        #
+        #resp = request_state(1)
+        #arecord.append(resp.sensors)
+        record_flag = False
+        arecord = record_buffer
+        record_buffer = []
         aresult = ExecuteTrajectoryForwardResult()
         aresult.record = arecord
         aresult.complete = True
         self._as.set_succeeded(result=aresult)
+
+
+def sub_sensors_cb(msg):
+    global record_flag, record_buffer
+    if record_flag:
+        record_buffer.append(msg)
+
 
 if __name__ == '__main__':
     rospy.init_node('exectj_forward_action_server')
     server = ExecTjForwardAS('exectj_forward')
     pub_rawcmd = rospy.Publisher('command_raw', CommandRaw, queue_size=10)
     request_state = rospy.ServiceProxy('call_sensors', CallSensors)
-
+    record_flag = False
+    record_buffer = []
+    sub_ssr = rospy.Subscriber('sensors', Sensors, sub_sensors_cb)
     rospy.spin()

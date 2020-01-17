@@ -13,6 +13,10 @@
 #include <ros/time.h>
 #include <Wire.h>
 #include <Adafruit_INA219.h>
+#inclued <Servo.h>
+
+Servo servo1;
+Servo servo2;
 
 Adafruit_INA219 ina219;
 
@@ -145,8 +149,8 @@ void setup() {
   //Serial.begin(57600);
   //setupADC();
   nh.getHardware()->setBaud(115200);
-  pinMode(pin_servo1,OUTPUT);
-  pinMode(pin_servo2,OUTPUT);
+  servo1.attach(pin_servo1);
+  servo2.attach(pin_servo2);
   pinMode(pin_d1,OUTPUT);
   pinMode(pin_d2,OUTPUT);
   //Vcc = readVcc()/1000.0;

@@ -4,6 +4,7 @@ import rospy, message_filters
 from maccepavd_model import MaccepavdModel
 from maccepavd.msg import SensorsRawAdc, Sensors, CommandRaw, Command, StateCommand
 from maccepavd.srv import CallSensors, CallSensorsRequest, CallSensorsResponse, CallRawSensors, CallRawSensorsRequest, CallRawSensorsResponse
+from sensor_msgs.msg import JointState
 
 
 def call_sensor_cb(request):
@@ -16,14 +17,23 @@ def call_rawsensor_cb(request):
     return CallRawSensorsResponse(rawsensors_buffer[-1])
 
 
-def sub_sensors_cb(msg):
+def sub_sensors_cb(msg, jntstate):
     # convert and store the sensor reading into buffer
     #sensor_msg = Sensors()
-    sensor_msg = model.raw2sensors(msg)
+    #sensor_msg = model.raw2sensors(msg)
+    sensor_msg = Sensors()
+    sensor_msg.header = msg.header
+    #sensor_msg.header.stamp = rospy.Time.now()
+    sensor_msg.joint_position = model.joint_sensor2rad(msg.joint_sensor)
+    sensor_msg.rege_current = msg.rege_current
+    sensor_msg.servo1_position = jntstate.position[0]
+    sensor_msg.servo2_position = jntstate.position[1]
+    sensor_msg.servo1_current = jntstate.effort[0]
+    sensor_msg.servo2_current = jntstate.effort[1]
     pub_sensor.publish(sensor_msg)
     rawsensors_buffer.append(msg)
     sensors_buffer.append(sensor_msg)
-
+    
     #state_cmd = StateCommand()
     #state_cmd.header = msg.header
     #state_cmd.joint_angle = sensor_msg.joint_angle
@@ -63,11 +73,15 @@ if __name__ == '__main__':
     #cmd_buffer.append(cmd0)
     model = MaccepavdModel()
     rospy.init_node('call_sensors_server')
-    sub_rawssr = rospy.Subscriber('sensors_raw', SensorsRawAdc, sub_sensors_cb)
-    #sub_rawcmd = message_filters.Subscriber('command_raw', CommandRaw, )
+    print('node init')
+    sub_rawssr = message_filters.Subscriber('/sensors_raw', SensorsRawAdc)
+    sub_js = message_filters.Subscriber('/dynamixel_workbench/joint_states', JointState)
+    ts = message_filters.ApproximateTimeSynchronizer([sub_rawssr, sub_js], 10, 0.1)
+    ts.registerCallback(sub_sensors_cb)
+    print('message filter init')
     #sub_rawcmd = rospy.Subscriber('command_raw', CommandRaw, sub_rawcmd_cb)
     #pub_statecmd = rospy.Publisher('state_command', StateCommand, queue_size = 10)
     pub_sensor = rospy.Publisher('sensors', Sensors, queue_size = 10)
-    service = rospy.Service('call_sensors', CallSensors, call_sensor_cb)
-    service_raw = rospy.Service('call_rawsensors', CallRawSensors, call_rawsensor_cb)
+    #service = rospy.Service('call_sensors', CallSensors, call_sensor_cb)
+    #service_raw = rospy.Service('call_rawsensors', CallRawSensors, call_rawsensor_cb)
     rospy.spin()

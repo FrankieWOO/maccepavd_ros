@@ -80,8 +80,10 @@ class MaccepavdModel(object):
 
     def cmd2raw(self, cmd):
         rawcmd = CommandRaw()
-        rawcmd.u1 = self.servo1_rad2usec(cmd.u1)
-        rawcmd.u2 = self.servo2_rad2usec(cmd.u2)
+        #rawcmd.u1 = self.servo1_rad2usec(cmd.u1)
+        #rawcmd.u2 = self.servo2_rad2usec(cmd.u2)
+        rawcmd.u1 = round(math.degrees(cmd.u1)/0.087890625)+2048
+	rawcmd.u2 = round(math.degrees(cmd.u2)/0.087890625)+512
         if cmd.u3 <= 0.5:
             D1 = cmd.u3/0.5
             D2 = 0
@@ -97,11 +99,8 @@ class MaccepavdModel(object):
         # convert raw sensors reading to meaningful values
         sensor_msg = Sensors()
         sensor_msg.header = rawsensor_msg.header
-        sensor_msg.servo1_position = self.servo1_sensor2rad(rawsensor_msg.servo1_sensor)
-        sensor_msg.servo2_position = self.servo2_sensor2rad(rawsensor_msg.servo2_sensor)
         sensor_msg.joint_position = self.joint_sensor2rad(rawsensor_msg.joint_sensor)
         sensor_msg.rege_current = rawsensor_msg.rege_current
-        sensor_msg.servo_current = rawsensor_msg.servo_current
         return sensor_msg
 
     def servo1_rad2usec(self, rad):
